@@ -392,3 +392,8 @@ stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 	return STM_OK;
 }
 
+void ssd1306_destroy(ssd1306_handle_t handle)
+{
+	_ssd1306_cleanup(handle);
+}
+
