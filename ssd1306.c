@@ -340,15 +340,15 @@ stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd
 
 	if (handle->inverse) {
 		if (color == SSD1306_COLOR_WHITE) {
-			handle->buf_display[x + (y / 8)*handle->width] |= 1 << (y % 8);
-		} else {
 			handle->buf_display[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
+		} else {
+			handle->buf_display[x + (y / 8)*handle->width] |= 1 << (y % 8);
 		}
 	} else {
 		if (color == SSD1306_COLOR_WHITE) {
-			handle->buf_display[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
-		} else {
 			handle->buf_display[x + (y / 8)*handle->width] |= 1 << (y % 8);
+		} else {
+			handle->buf_display[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
 		}
 	}
 
