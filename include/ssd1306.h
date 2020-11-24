@@ -67,6 +67,7 @@ typedef struct {
 	ssd1306_hw_info_t		hw_info;
 	ssd1306_size_t 			size;
 	ssd1306_comm_mode_t 	comm_mode;
+	bool 					inverse;
 } ssd1306_cfg_t;
 
 ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config);
