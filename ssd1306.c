@@ -26,6 +26,40 @@
 #define SSD1306_ADDR						(0x3C<<1)
 #define SSD1306_REG_DATA_ADDR				0x40
 #define SSD1306_REG_CMD_ADDR				0x00
+/*!<  */
+#define SSD1306_SET_CONTRAST				0x81 		/*!< 0x81 + 0x00~0xFF Contrast ... reset = 0x7F */
+#define SSD1306_DISPLAYALLON_RESUME 		0xA4		/*!< Resume to RAM content display */
+#define SSD1306_DISPLAYALLON_IGNORE 		0xA5		/*!< Ignore RAM content display */
+#define SSD1306_DISPLAY_NORMAL 				0xA6		/*!< White: 1; Black: 0 */
+#define SSD1306_DISPLAY_INVERSE 			0xA7		/*!< White: 0; Black: 1 */
+#define SSD1306_DISPLAY_OFF 				0xAE		/*!< Screen OFF */
+#define SSD1306_DISPLAY_ON 					0xAF		/*!< Screen ON */
+
+#define SSD1306_SET_MEMORYMODE 				0x20 		/*!< 0x20 + 0x00: horizontal; 0x01: vertical; 0x02: page */
+#define SSD1306_SET_MEMORYMODE_HOR 			0x00
+#define SSD1306_SET_MEMORYMODE_VER 			0x01 
+#define SSD1306_SET_MEMORYMODE_PAGE 		0x02
+
+#define SSD1306_SET_COLUMN_ADDR 			0x21  		/*!< 0x21 + 0~127 + 0~127: colum start address + column end address */
+#define SSD1306_SET_PAGE_ADDR 				0x22		/*!< 0x22 + 0~7 + 0~7: page start address + page end address */
+
+#define SSD1306_SET_STARTLINE_ZERO 			0x40
+#define SSD1306_SET_SEGREMAP_NORMAL  		0xA0 
+#define SSD1306_SET_SEGREMAP_INV 			0xA1 
+#define SSD1306_SET_MULTIPLEX 				0XA8 
+#define SSD1306_COMSCAN_INC 				0xC0 
+#define SSD1306_COMSCAN_DEC 				0xC8 
+#define SSD1306_SET_DISPLAYOFFSET 			0xD3 
+#define SSD1306_SET_COMPINS 				0xDA
+
+#define SSD1306_SET_CLKDIV 					0xD5 
+#define SSD1306_SET_PRECHARGE 				0xD9 
+#define SSD1306_SET_COMDESELECT 			0xDB
+#define SSD1306_NOP 						0xE3 
+
+#define SSD1306_CHARGEPUMP 					0x8D
+#define SSD1306_CHARGEPUMP_ON 				0x14
+#define SSD1306_CHARGEPUMP_OFF 				0x10 
 
 #define mutex_lock(x)			while (xSemaphoreTake(x, portMAX_DELAY) != pdPASS)
 #define mutex_unlock(x) 		xSemaphoreGive(x)
@@ -52,6 +86,8 @@ typedef struct ssd1306 {
 	write_data_func			_write_data;
 	write_cmd_func 			_write_cmd;
 	uint8_t  				*buf_display;
+	uint8_t 				cur_x;
+	uint8_t					cur_y;
 	SemaphoreHandle_t		lock;
 } ssd1306_t;
 
@@ -239,11 +275,13 @@ ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config)
 	handle->comm_mode = config->comm_mode;
 	handle->_write_cmd = _get_write_cmd_func(config->comm_mode);
 	handle->_write_data = _get_write_data_func(config->comm_mode);
+	handle->cur_x = 0;
+	handle->cur_x = 0;
 	handle->lock = mutex_create();
 
 	return handle;
 }
-uint8_t buf[128 * 64 / 8];
+
 stm_err_t ssd1306_clear(ssd1306_handle_t handle)
 {
 	SSD1306_CHECK(handle, SSD1306_CLEAR_ERR_STR, return STM_ERR_INVALID_ARG);
@@ -262,6 +300,9 @@ stm_err_t ssd1306_clear(ssd1306_handle_t handle)
 	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x22), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
 	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x00), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
 	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x07), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+
+	handle->cur_x = 0;
+	handle->cur_y = 0;
 
 	mutex_unlock(handle->lock);
 
@@ -306,11 +347,21 @@ stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd
 	return STM_OK;
 }
 
-stm_err_t ssd1306_write_char(ssd1306_handle_t handle, uint8_t chr)
+stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_type_t font_type, uint8_t chr)
 {
-	SSD1306_CHECK(handle, SSD1306_WRITE_PIXEL_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(handle, SSD1306_WRITE_CHAR_ERR_STR, return STM_ERR_INVALID_ARG);
 
+	mutex_lock(handle->lock);
 
+	font_t font;
+	SSD1306_CHECK(get_font(chr, font_type, &font) > 0, SSD1306_WRITE_CHAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;})
+
+	for (int i=0; i< font.height;i++) {
+		handle->buf_display[handle->cur_x+i] = font.data[i];
+	}
+
+	mutex_unlock(handle->lock);
+	_update_screen(handle);
 	return STM_OK;
 }
 
@@ -321,12 +372,8 @@ stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 	SSD1306_CHECK(y < handle->height, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);
 
 	mutex_lock(handle->lock);
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x21), SSD1306_GOTYXY_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info,    x), SSD1306_GOTYXY_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x7F), SSD1306_GOTYXY_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x22), SSD1306_GOTYXY_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info,    y), SSD1306_GOTYXY_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x07), SSD1306_GOTYXY_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	handle->cur_x = x;
+	handle->cur_y = y;
 	mutex_unlock(handle->lock);
 
 	return STM_OK;
