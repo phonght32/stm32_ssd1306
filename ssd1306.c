@@ -200,13 +200,13 @@ static uint8_t _get_screen_height(ssd1306_size_t size) {
 	}
 }
 
-static stm_err_t _update_screen(ssd1306_handle_t handle)
+static stm_err_t _update_screen(ssd1306_handle_t handle, uint8_t *buf_screen)
 {
 	for (uint8_t i = 0; i < (handle->height / 8); i++) {
 		SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0xB0 + i), SSD1306_UPDATE_ERR_STR, return STM_FAIL);
 		SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x00), SSD1306_UPDATE_ERR_STR, return STM_FAIL);
 		SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x10), SSD1306_UPDATE_ERR_STR, return STM_FAIL);
-		SSD1306_CHECK(!handle->_write_data(handle->hw_info, &handle->buf_display[i * handle->width], handle->width), SSD1306_UPDATE_ERR_STR, return STM_FAIL);
+		SSD1306_CHECK(!handle->_write_data(handle->hw_info, &buf_screen[i * handle->width], handle->width), SSD1306_UPDATE_ERR_STR, return STM_FAIL);
 	}
 
 	return STM_OK;
@@ -290,22 +290,15 @@ stm_err_t ssd1306_clear(ssd1306_handle_t handle)
 
 	mutex_lock(handle->lock);
 
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+
 	for (uint32_t i = 0; i < (handle->width * handle->height / 8); i++) {
-		handle->buf_display[i] = 0x00;
+		buf_screen[i] = 0x00;
 	}
 
-	SSD1306_CHECK(!_update_screen(handle), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x21), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x00), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x7F), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x22), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x00), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-	SSD1306_CHECK(!handle->_write_cmd(handle->hw_info, 0x07), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-
-	handle->cur_x = 0;
-	handle->cur_y = 0;
-
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
 	mutex_unlock(handle->lock);
 
 	return STM_OK;
@@ -317,14 +310,17 @@ stm_err_t ssd1306_fill(ssd1306_handle_t handle, ssd1306_color_t color)
 
 	mutex_lock(handle->lock);
 
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+
 	for (uint32_t i = 0; i < (handle->width * handle->height / 8); i++) {
-		handle->buf_display[i] = handle->inverse == false ?
-		                         ((color == SSD1306_COLOR_WHITE) ? 0xFF : 0x00) :
-		                         ((color == SSD1306_COLOR_WHITE) ? 0x00 : 0xFF);
+		buf_screen[i] = handle->inverse == false ?
+		                ((color == SSD1306_COLOR_WHITE) ? 0xFF : 0x00) :
+		                ((color == SSD1306_COLOR_WHITE) ? 0x00 : 0xFF);
 	}
 
-	SSD1306_CHECK(!_update_screen(handle), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
-
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
 	mutex_unlock(handle->lock);
 
 	return STM_OK;
@@ -338,22 +334,26 @@ stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd
 
 	mutex_lock(handle->lock);
 
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+	memcpy(buf_screen, handle->buf_display, buf_screen_size);
+
 	if (handle->inverse) {
 		if (color == SSD1306_COLOR_WHITE) {
-			handle->buf_display[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
+			buf_screen[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
 		} else {
-			handle->buf_display[x + (y / 8)*handle->width] |= 1 << (y % 8);
+			buf_screen[x + (y / 8)*handle->width] |= 1 << (y % 8);
 		}
 	} else {
 		if (color == SSD1306_COLOR_WHITE) {
-			handle->buf_display[x + (y / 8)*handle->width] |= 1 << (y % 8);
+			buf_screen[x + (y / 8)*handle->width] |= 1 << (y % 8);
 		} else {
-			handle->buf_display[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
+			buf_screen[x + (y / 8)*handle->width] &= ~ 1 << (y % 8);
 		}
 	}
 
-
-	SSD1306_CHECK(!_update_screen(handle), SSD1306_WRITE_PIXEL_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_WRITE_PIXEL_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
 
 	mutex_unlock(handle->lock);
 
@@ -374,7 +374,7 @@ stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_type_t font_type, uin
 	}
 
 	mutex_unlock(handle->lock);
-	_update_screen(handle);
+	// _update_screen(handle);
 	return STM_OK;
 }
 
