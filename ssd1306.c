@@ -291,7 +291,7 @@ stm_err_t ssd1306_clear(ssd1306_handle_t handle)
 	mutex_lock(handle->lock);
 
 	for (uint32_t i = 0; i < (handle->width * handle->height / 8); i++) {
-		handle->buf_display[i] = handle->inverse == false ? 0x00 : 0xFF;
+		handle->buf_display[i] = 0x00;
 	}
 
 	SSD1306_CHECK(!_update_screen(handle), SSD1306_CLEAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
