@@ -74,7 +74,7 @@ ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config);
 stm_err_t ssd1306_clear(ssd1306_handle_t handle);
 stm_err_t ssd1306_fill(ssd1306_handle_t handle, ssd1306_color_t color);
 stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd1306_color_t color);
-stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_type_t font_type, uint8_t chr);
+stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_size_t font_size, uint8_t chr);
 stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y);
 void ssd1306_destroy(ssd1306_handle_t handle);
 
