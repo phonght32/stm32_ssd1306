@@ -398,6 +398,52 @@ stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_size_t font_size, uin
 	return STM_OK;
 }
 
+stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, uint8_t *str)
+{
+	SSD1306_CHECK(handle, SSD1306_WRITE_STR_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(str, SSD1306_WRITE_STR_ERR_STR, return STM_ERR_INVALID_ARG);
+
+	mutex_lock(handle->lock);
+
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+	memcpy(buf_screen, handle->buf_display, buf_screen_size);
+
+	uint8_t cur_x = handle->cur_x;
+	uint8_t cur_y = handle->cur_y;
+
+	while (*str) {
+		font_t font;
+		SSD1306_CHECK(get_font(*str, font_size, &font) > 0, SSD1306_WRITE_STR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+
+		uint8_t num_byte_per_row = font.data_len / font.height;
+
+		for (uint8_t height_idx = 0; height_idx < font.height; height_idx ++) {
+			for ( uint8_t byte_idx = 0; byte_idx < num_byte_per_row; byte_idx++) {
+				for (uint8_t width_idx = 0; width_idx < 8; width_idx++) {
+					uint8_t x = cur_x + width_idx + byte_idx * 8;
+					uint8_t y = cur_y + height_idx;
+
+					if (((font.data[height_idx * num_byte_per_row + byte_idx] << width_idx) & 0x80) == 0x80) {
+						buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
+					} else {
+						buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
+					}
+				}
+			}
+		}
+		cur_x += font.width + num_byte_per_row;
+		str++;
+	}
+
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_WRITE_STR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
+	handle->cur_x = cur_x;
+	mutex_unlock(handle->lock);
+
+	return STM_OK;
+}
+
 stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 {
 	SSD1306_CHECK(handle, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);
