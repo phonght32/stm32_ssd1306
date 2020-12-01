@@ -378,22 +378,21 @@ stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_size_t font_size, uin
 	for (uint8_t height_idx = 0; height_idx < font.height; height_idx ++) {
 		for ( uint8_t byte_idx = 0; byte_idx < num_byte_per_row; byte_idx++) {
 			for (uint8_t width_idx = 0; width_idx < 8; width_idx++) {
-				uint8_t x = width_idx + handle->cur_x;
-				uint8_t y = height_idx + handle->cur_y;
+				uint8_t x = handle->cur_x + width_idx + byte_idx * 8;
+				uint8_t y = handle->cur_y + height_idx;
 
-				if (((font.data[height_idx*num_byte_per_row + byte_idx] << width_idx) & 0x80) == 0x80) {
+				if (((font.data[height_idx * num_byte_per_row + byte_idx] << width_idx) & 0x80) == 0x80) {
 					buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
 				} else {
 					buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
 				}
 			}
 		}
-
 	}
 
 	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_WRITE_CHAR_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
 	memcpy(handle->buf_display, buf_screen, buf_screen_size);
-	handle->cur_x += font.width;
+	handle->cur_x += font.width + num_byte_per_row;
 	mutex_unlock(handle->lock);
 
 	return STM_OK;
