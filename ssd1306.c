@@ -19,7 +19,8 @@
 #define SSD1306_DRAW_ARC_ERR_STR  			"ssd1306 draw arc error"
 #define SSD1306_DRAW_CIRCLE_ERR_STR  		"ssd1306 draw circle error"
 #define SSD1306_DRAW_REC_ERR_STR  			"ssd1306 draw rectangle error"
-#define SSD1306_GOTYXY_ERR_STR				"ssd1306 gotoxy error"
+#define SSD1306_SET_POSITION_ERR_STR		"ssd1306 set position error"
+#define SSD1306_GET_POSITION_ERR_STR 		"ssd1306 get position error"
 
 #define TIMEOUT_MS 							100
 
@@ -446,13 +447,27 @@ stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, u
 
 stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 {
-	SSD1306_CHECK(handle, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);
-	SSD1306_CHECK(x < handle->width, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);
-	SSD1306_CHECK(y < handle->height, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(handle, SSD1306_SET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(x < handle->width, SSD1306_SET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(y < handle->height, SSD1306_SET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
 
 	mutex_lock(handle->lock);
 	handle->cur_x = x;
 	handle->cur_y = y;
+	mutex_unlock(handle->lock);
+
+	return STM_OK;
+}
+
+stm_err_t ssd1306_get_position(ssd1306_handle_t handle, uint8_t *x, uint8_t *y)
+{
+	SSD1306_CHECK(handle, SSD1306_GET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(x, SSD1306_GET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(y, SSD1306_GET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
+
+	mutex_lock(handle->lock);
+	*x = handle->cur_x;
+	*y = handle->cur_y;
 	mutex_unlock(handle->lock);
 
 	return STM_OK;

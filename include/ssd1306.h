@@ -144,6 +144,17 @@ stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, u
 stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y);
 
 /*
+ * @brief   Get position.
+ * @param   handle Handle structure.
+ * @param 	x Pointer to column index.
+ * @param 	y Pointer to row index.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
+stm_err_t ssd1306_get_position(ssd1306_handle_t handle, uint8_t *x, uint8_t *y);
+
+/*
  * @brief   Destroy SSD1306 handle structure.
  * @param   handle Handle structure.
  * @return	None.
