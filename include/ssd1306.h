@@ -37,46 +37,117 @@ extern "C" {
 typedef struct ssd1306 *ssd1306_handle_t;
 
 typedef enum {
-	SSD1306_COLOR_BLACK = 0,
-	SSD1306_COLOR_WHITE,
+	SSD1306_COLOR_BLACK = 0,						/*!< Color black */
+	SSD1306_COLOR_WHITE,							/*!< Color white */
 	SSD1306_COLOR_MAX
 } ssd1306_color_t;
 
 typedef enum {
-	SSD1306_SIZE_128_32 = 0,
-	SSD1306_SIZE_128_64,
+	SSD1306_SIZE_128_32 = 0,						/*!< Screen resolution 128x32 */
+	SSD1306_SIZE_128_64,							/*!< Screen resolution 128x64 */
 	SSD1306_SIZE_MAX
 } ssd1306_size_t;
 
 typedef enum {
-	SSD1306_COMM_MODE_I2C = 0,
-	SSD1306_COMM_MODE_SPI,
+	SSD1306_COMM_MODE_I2C = 0,						/*!< Communicate over I2C */
+	SSD1306_COMM_MODE_SPI,							/*!< Communicate over SPI */
 	SSD1306_COMM_MODE_MAX
 } ssd1306_comm_mode_t;
 
 typedef struct {
-	i2c_num_t 				i2c_num;
-	i2c_pins_pack_t 		i2c_pins_pack;
-	uint32_t				i2c_speed;
-	spi_num_t 				spi_num;
-	spi_pins_pack_t 		spi_pins_pack;
-	bool 					is_init;
+	i2c_num_t 				i2c_num;				/*!< I2C num */
+	i2c_pins_pack_t 		i2c_pins_pack;			/*!< I2C pins pack */
+	uint32_t				i2c_speed;				/*!< I2C speed */
+	spi_num_t 				spi_num;				/*!< SPI num */
+	spi_pins_pack_t 		spi_pins_pack;			/*!< SPI pins pack */
+	bool 					is_init;				/*!< Check hardware already initialized */
 } ssd1306_hw_info_t;
 
 typedef struct {
-	ssd1306_hw_info_t		hw_info;
-	ssd1306_size_t 			size;
-	ssd1306_comm_mode_t 	comm_mode;
-	bool 					inverse;
+	ssd1306_hw_info_t		hw_info;				/*!< Hardware information */
+	ssd1306_size_t 			size;					/*!< Screen resolution */
+	ssd1306_comm_mode_t 	comm_mode;				/*!< Communicate protocol */
+	bool 					inverse;				/*!< Inverse display */
 } ssd1306_cfg_t;
 
+/*
+ * @brief   Initialize SSD1306 driver.
+ * @param   config Struct pointer.
+ * @return
+ *      - SSD1306 handle structure: Success.
+ *      - 0: Fail.
+ */
 ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config);
+
+/*
+ * @brief   Clear all display.
+ * @param   handle Handle structure.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
 stm_err_t ssd1306_clear(ssd1306_handle_t handle);
+
+/*
+ * @brief   Fill screen with color.
+ * @param   handle Handle structure.
+ * @param 	color Fill color.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
 stm_err_t ssd1306_fill(ssd1306_handle_t handle, ssd1306_color_t color);
+
+/*
+ * @brief   Write color to pixel.
+ * @param   handle Handle structure.
+ * @param 	x Column index.
+ * @param 	y Row index.
+ * @param 	color Color.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
 stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd1306_color_t color);
+
+/*
+ * @brief   Write ASCII character.
+ * @param   handle Handle structure.
+ * @param 	font_size Font size.
+ * @param 	chr ASCII character.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
 stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_size_t font_size, uint8_t chr);
+
+/*
+ * @brief   Write string.
+ * @param   handle Handle structure.
+ * @param 	font_size Font size.
+ * @param 	str Pointer to string.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
 stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, uint8_t *str);
+
+/*
+ * @brief   Goto position.
+ * @param   handle Handle structure.
+ * @param 	x Column index.
+ * @param 	y Row index.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
 stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y);
+
+/*
+ * @brief   Destroy SSD1306 handle structure.
+ * @param   handle Handle structure.
+ * @return	None.
+ */
 void ssd1306_destroy(ssd1306_handle_t handle);
 
 #ifdef __cplusplus
