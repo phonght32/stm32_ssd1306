@@ -444,7 +444,7 @@ stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, u
 	return STM_OK;
 }
 
-stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y)
+stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 {
 	SSD1306_CHECK(handle, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);
 	SSD1306_CHECK(x < handle->width, SSD1306_GOTYXY_ERR_STR, return STM_ERR_INVALID_ARG);

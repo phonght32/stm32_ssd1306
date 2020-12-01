@@ -141,7 +141,7 @@ stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, u
  *      - STM_OK:   Success.
  *      - Others: 	Fail.
  */
-stm_err_t ssd1306_gotoxy(ssd1306_handle_t handle, uint8_t x, uint8_t y);
+stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y);
 
 /*
  * @brief   Destroy SSD1306 handle structure.
