@@ -575,6 +575,7 @@ stm_err_t ssd1306_draw_circle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t
 		_write_pixel(handle, buf_screen, x_origin + x, y_origin + y, color);
 		_write_pixel(handle, buf_screen, x_origin + x, y_origin - y, color);
 		_write_pixel(handle, buf_screen, x_origin - x, y_origin - y, color);
+
 		e2 = err;
 		if (e2 <= y) {
 			y++;
@@ -582,21 +583,17 @@ stm_err_t ssd1306_draw_circle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t
 			if (-x == y && e2 <= x) {
 				e2 = 0;
 			}
-			else
-			{
+			else {
 				/*nothing to do*/
 			}
-		}
-		else
-		{
+		} else {
 			/*nothing to do*/
 		}
+
 		if (e2 > x) {
 			x++;
 			err = err + (x * 2 + 1);
-		}
-		else
-		{
+		} else {
 			/*nothing to do*/
 		}
 	} while (x <= 0);
@@ -624,7 +621,7 @@ stm_err_t ssd1306_draw_image(ssd1306_handle_t handle, uint8_t x_origin, uint8_t 
 	for (uint8_t height_idx = 0; height_idx < height; height_idx++) {
 		for (uint8_t byte_idx = 0; byte_idx < num_byte_per_row; byte_idx++) {
 			for (uint8_t width_idx = 0; width_idx < 8; width_idx++) {
-				uint8_t x = width_idx +byte_idx*8;
+				uint8_t x = width_idx + byte_idx * 8;
 				uint8_t y = height_idx;
 
 				if (((image_src[height_idx * num_byte_per_row + byte_idx] << width_idx) & 0x80) == 0x80) {
