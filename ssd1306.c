@@ -527,6 +527,28 @@ stm_err_t ssd1306_draw_line(ssd1306_handle_t handle, uint8_t x_start, uint8_t y_
 	return STM_OK;
 }
 
+stm_err_t ssd1306_draw_rectangle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t width, uint8_t height, ssd1306_color_t color)
+{
+	SSD1306_CHECK(handle, SSD1306_DRAW_REC_ERR_STR, return STM_ERR_INVALID_ARG);
+
+	mutex_lock(handle->lock);
+
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+	memcpy(buf_screen, handle->buf_display, buf_screen_size);
+
+	_draw_line(handle, buf_screen, x_origin, y_origin, x_origin + width, y_origin, color);
+	_draw_line(handle, buf_screen, x_origin + width, y_origin, x_origin + width, y_origin + height, color);
+	_draw_line(handle, buf_screen, x_origin + width, y_origin + height, x_origin, y_origin + height, color);
+	_draw_line(handle, buf_screen, x_origin, y_origin + height, x_origin, y_origin, color);
+
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_DRAW_REC_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
+	mutex_unlock(handle->lock);
+
+	return STM_OK;
+}
+
 stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 {
 	SSD1306_CHECK(handle, SSD1306_SET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
