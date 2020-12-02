@@ -201,6 +201,23 @@ static uint8_t _get_screen_height(ssd1306_size_t size) {
 	}
 }
 
+static void _write_pixel(ssd1306_handle_t handle, uint8_t *buf_screen, uint8_t x, uint8_t y, ssd1306_color_t color)
+{
+	if (handle->inverse) {
+		if (color == SSD1306_COLOR_WHITE) {
+			buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
+		} else {
+			buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
+		}
+	} else {
+		if (color == SSD1306_COLOR_WHITE) {
+			buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
+		} else {
+			buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
+		}
+	}
+}
+
 static void _draw_line(ssd1306_handle_t handle, uint8_t *buf_screen, uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, ssd1306_color_t color)
 {
 	int32_t deltaX = abs(x_end - x_start);
@@ -401,19 +418,7 @@ stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd
 	uint8_t buf_screen[buf_screen_size];
 	memcpy(buf_screen, handle->buf_display, buf_screen_size);
 
-	if (handle->inverse) {
-		if (color == SSD1306_COLOR_WHITE) {
-			buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
-		} else {
-			buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
-		}
-	} else {
-		if (color == SSD1306_COLOR_WHITE) {
-			buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
-		} else {
-			buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
-		}
-	}
+	_write_pixel(handle, buf_screen, x, y, color);
 
 	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_WRITE_PIXEL_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
 	memcpy(handle->buf_display, buf_screen, buf_screen_size);
