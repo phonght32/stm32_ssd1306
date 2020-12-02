@@ -445,6 +445,83 @@ stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, u
 	return STM_OK;
 }
 
+stm_err_t ssd1306_draw_line(ssd1306_handle_t handle, uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, ssd1306_color_t color)
+{
+
+	SSD1306_CHECK(handle, SSD1306_DRAW_LINE_ERR_STR, return STM_ERR_INVALID_ARG);
+
+	mutex_lock(handle->lock);
+
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+	memcpy(buf_screen, handle->buf_display, buf_screen_size);
+
+	int32_t deltaX = abs(x_end - x_start);
+	int32_t deltaY = abs(y_end - y_start);
+	int32_t signX = ((x_start < x_end) ? 1 : -1);
+	int32_t signY = ((y_start < y_end) ? 1 : -1);
+	int32_t error = deltaX - deltaY;
+	int32_t error2;
+
+	if (handle->inverse) {
+		if (color == SSD1306_COLOR_WHITE) {
+			buf_screen[x_end + (y_end / 8)*handle->width] &= ~ (1 << (y_end % 8));
+		} else {
+			buf_screen[x_end + (y_end / 8)*handle->width] |= (1 << (y_end % 8));
+		}
+	} else {
+		if (color == SSD1306_COLOR_WHITE) {
+			buf_screen[x_end + (y_end / 8)*handle->width] |= (1 << (y_end % 8));
+		} else {
+			buf_screen[x_end + (y_end / 8)*handle->width] &= ~ (1 << (y_end % 8));
+		}
+	}
+
+	while ((x_start != x_end) || (y_start != y_end))
+	{
+		if (handle->inverse) {
+			if (color == SSD1306_COLOR_WHITE) {
+				buf_screen[x_start + (y_start / 8)*handle->width] &= ~ (1 << (y_start % 8));
+			} else {
+				buf_screen[x_start + (y_start / 8)*handle->width] |= (1 << (y_start % 8));
+			}
+		} else {
+			if (color == SSD1306_COLOR_WHITE) {
+				buf_screen[x_start + (y_start / 8)*handle->width] |= (1 << (y_start % 8));
+			} else {
+				buf_screen[x_start + (y_start / 8)*handle->width] &= ~ (1 << (y_start % 8));
+			}
+		}
+
+		error2 = error * 2;
+		if (error2 > -deltaY)
+		{
+			error -= deltaY;
+			x_start += signX;
+		}
+		else
+		{
+			/*nothing to do*/
+		}
+
+		if (error2 < deltaX)
+		{
+			error += deltaX;
+			y_start += signY;
+		}
+		else
+		{
+			/*nothing to do*/
+		}
+	}
+
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_DRAW_LINE_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
+	mutex_unlock(handle->lock);
+
+	return STM_OK;
+}
+
 stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 {
 	SSD1306_CHECK(handle, SSD1306_SET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
@@ -472,6 +549,8 @@ stm_err_t ssd1306_get_position(ssd1306_handle_t handle, uint8_t *x, uint8_t *y)
 
 	return STM_OK;
 }
+
+
 
 void ssd1306_destroy(ssd1306_handle_t handle)
 {

@@ -133,6 +133,20 @@ stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_size_t font_size, uin
 stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, uint8_t *str);
 
 /*
+ * @brief   Draw line.
+ * @param   handle Handle structure.
+ * @param 	x_start x start position.
+ * @param 	y_start y start position.
+ * @param 	x_end x end position.
+ * @param 	y_end y end position.
+ * @param 	color Line color.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
+stm_err_t ssd1306_draw_line(ssd1306_handle_t handle, uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, ssd1306_color_t color);
+
+/*
  * @brief   Goto position.
  * @param   handle Handle structure.
  * @param 	x Column index.
