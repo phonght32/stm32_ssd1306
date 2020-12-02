@@ -161,6 +161,19 @@ stm_err_t ssd1306_draw_line(ssd1306_handle_t handle, uint8_t x_start, uint8_t y_
 stm_err_t ssd1306_draw_rectangle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t width, uint8_t height, ssd1306_color_t color);
 
 /*
+ * @brief   Draw circle.
+ * @param   handle Handle structure.
+ * @param 	x_origin x origin position.
+ * @param 	y_origin y origin position.
+ * @param 	radius Radius.
+ * @param 	color Line color.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
+stm_err_t ssd1306_draw_circle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t radius, ssd1306_color_t color);
+
+/*
  * @brief   Goto position.
  * @param   handle Handle structure.
  * @param 	x Column index.

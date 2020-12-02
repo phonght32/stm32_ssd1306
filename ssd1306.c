@@ -554,6 +554,59 @@ stm_err_t ssd1306_draw_rectangle(ssd1306_handle_t handle, uint8_t x_origin, uint
 	return STM_OK;
 }
 
+stm_err_t ssd1306_draw_circle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t radius, ssd1306_color_t color)
+{
+	SSD1306_CHECK(handle, SSD1306_DRAW_CIRCLE_ERR_STR, return STM_ERR_INVALID_ARG);
+
+	mutex_lock(handle->lock);
+
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+	memcpy(buf_screen, handle->buf_display, buf_screen_size);
+
+	int32_t x = -radius;
+	int32_t y = 0;
+	int32_t err = 2 - 2 * radius;
+	int32_t e2;
+
+	do {
+		_write_pixel(handle, buf_screen, x_origin - x, y_origin + y, color);
+		_write_pixel(handle, buf_screen, x_origin + x, y_origin + y, color);
+		_write_pixel(handle, buf_screen, x_origin + x, y_origin - y, color);
+		_write_pixel(handle, buf_screen, x_origin - x, y_origin - y, color);
+		e2 = err;
+		if (e2 <= y) {
+			y++;
+			err = err + (y * 2 + 1);
+			if (-x == y && e2 <= x) {
+				e2 = 0;
+			}
+			else
+			{
+				/*nothing to do*/
+			}
+		}
+		else
+		{
+			/*nothing to do*/
+		}
+		if (e2 > x) {
+			x++;
+			err = err + (x * 2 + 1);
+		}
+		else
+		{
+			/*nothing to do*/
+		}
+	} while (x <= 0);
+
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_DRAW_CIRCLE_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
+	mutex_unlock(handle->lock);
+
+	return STM_OK;
+}
+
 stm_err_t ssd1306_set_position(ssd1306_handle_t handle, uint8_t x, uint8_t y)
 {
 	SSD1306_CHECK(handle, SSD1306_SET_POSITION_ERR_STR, return STM_ERR_INVALID_ARG);
