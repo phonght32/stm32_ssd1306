@@ -326,7 +326,6 @@ ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config)
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_DISPLAY_OFF), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_MEMORYMODE), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_MEMORYMODE_HOR), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
-	// SSD1306_CHECK(!_write_cmd(config->hw_info, 0xB0), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_COMSCAN_DEC), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x00), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x10), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
@@ -334,7 +333,7 @@ ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config)
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_SEGREMAP_INV), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, config->inverse == false ? SSD1306_DISPLAY_NORMAL : SSD1306_DISPLAY_INVERSE), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, 0xFF), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
-	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x3F), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
+	SSD1306_CHECK(!_write_cmd(config->hw_info, config->size == SSD1306_SIZE_128_32 ? 0x1F : 0x3F), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_DISPLAYALLON_RESUME), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_DISPLAYOFFSET), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x00), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
@@ -343,7 +342,7 @@ ssd1306_handle_t ssd1306_init(ssd1306_cfg_t *config)
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_PRECHARGE), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x22), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_COMPINS), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
-	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x12), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
+	SSD1306_CHECK(!_write_cmd(config->hw_info, config->size == SSD1306_SIZE_128_32 ? 0x02 : 0x12), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_SET_COMDESELECT), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, 0x20), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
 	SSD1306_CHECK(!_write_cmd(config->hw_info, SSD1306_CHARGEPUMP), SSD1306_INIT_ERR_STR, {_ssd1306_cleanup(handle); return NULL;});
