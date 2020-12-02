@@ -19,6 +19,7 @@
 #define SSD1306_DRAW_ARC_ERR_STR  			"ssd1306 draw arc error"
 #define SSD1306_DRAW_CIRCLE_ERR_STR  		"ssd1306 draw circle error"
 #define SSD1306_DRAW_REC_ERR_STR  			"ssd1306 draw rectangle error"
+#define SSD1306_DRAW_IMG_ERR_STR			"ssd1306 draw image error"
 #define SSD1306_SET_POSITION_ERR_STR		"ssd1306 set position error"
 #define SSD1306_GET_POSITION_ERR_STR 		"ssd1306 get position error"
 
@@ -601,6 +602,41 @@ stm_err_t ssd1306_draw_circle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t
 	} while (x <= 0);
 
 	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_DRAW_CIRCLE_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
+	memcpy(handle->buf_display, buf_screen, buf_screen_size);
+	mutex_unlock(handle->lock);
+
+	return STM_OK;
+}
+
+stm_err_t ssd1306_draw_image(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t width, uint8_t height, uint8_t *image_src)
+{
+	SSD1306_CHECK(handle, SSD1306_DRAW_IMG_ERR_STR, return STM_ERR_INVALID_ARG);
+	SSD1306_CHECK(image_src, SSD1306_DRAW_IMG_ERR_STR, return STM_ERR_INVALID_ARG);
+
+	mutex_lock(handle->lock);
+
+	uint32_t buf_screen_size = handle->width * handle->height / 8;
+	uint8_t buf_screen[buf_screen_size];
+	memcpy(buf_screen, handle->buf_display, buf_screen_size);
+
+	uint8_t num_byte_per_row = width / 8;
+
+	for (uint8_t height_idx = 0; height_idx < height; height_idx++) {
+		for (uint8_t byte_idx = 0; byte_idx < num_byte_per_row; byte_idx++) {
+			for (uint8_t width_idx = 0; width_idx < 8; width_idx++) {
+				uint8_t x = width_idx +byte_idx*8;
+				uint8_t y = height_idx;
+
+				if (((image_src[height_idx * num_byte_per_row + byte_idx] << width_idx) & 0x80) == 0x80) {
+					buf_screen[x + (y / 8)*handle->width] |= (1 << (y % 8));
+				} else {
+					buf_screen[x + (y / 8)*handle->width] &= ~ (1 << (y % 8));
+				}
+			}
+		}
+	}
+
+	SSD1306_CHECK(!_update_screen(handle, buf_screen), SSD1306_DRAW_IMG_ERR_STR, {mutex_unlock(handle->lock); return STM_FAIL;});
 	memcpy(handle->buf_display, buf_screen, buf_screen_size);
 	mutex_unlock(handle->lock);
 

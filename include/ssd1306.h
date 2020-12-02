@@ -174,6 +174,20 @@ stm_err_t ssd1306_draw_rectangle(ssd1306_handle_t handle, uint8_t x_origin, uint
 stm_err_t ssd1306_draw_circle(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t radius, ssd1306_color_t color);
 
 /*
+ * @brief   Draw mono image.
+ * @param   handle Handle structure.
+ * @param 	x_origin x origin position.
+ * @param 	y_origin y origin position.
+ * @param 	width Image width in pixel.
+ * @param 	height Image height in pixel.
+ * @param 	image_src Image source.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
+stm_err_t ssd1306_draw_image(ssd1306_handle_t handle, uint8_t x_origin, uint8_t y_origin, uint8_t width, uint8_t height, uint8_t *image_src);
+
+/*
  * @brief   Goto position.
  * @param   handle Handle structure.
  * @param 	x Column index.
