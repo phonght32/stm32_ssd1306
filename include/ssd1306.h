@@ -99,18 +99,6 @@ stm_err_t ssd1306_clear(ssd1306_handle_t handle);
 stm_err_t ssd1306_fill(ssd1306_handle_t handle, ssd1306_color_t color);
 
 /*
- * @brief   Write color to pixel.
- * @param   handle Handle structure.
- * @param 	x Column index.
- * @param 	y Row index.
- * @param 	color Color.
- * @return
- *      - STM_OK:   Success.
- *      - Others: 	Fail.
- */
-stm_err_t ssd1306_write_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd1306_color_t color);
-
-/*
  * @brief   Write ASCII character.
  * @param   handle Handle structure.
  * @param 	font_size Font size.
@@ -131,6 +119,18 @@ stm_err_t ssd1306_write_char(ssd1306_handle_t handle, font_size_t font_size, uin
  *      - Others: 	Fail.
  */
 stm_err_t ssd1306_write_string(ssd1306_handle_t handle, font_size_t font_size, uint8_t *str);
+
+/*
+ * @brief   Draw color to pixel.
+ * @param   handle Handle structure.
+ * @param 	x Column index.
+ * @param 	y Row index.
+ * @param 	color Color.
+ * @return
+ *      - STM_OK:   Success.
+ *      - Others: 	Fail.
+ */
+stm_err_t ssd1306_draw_pixel(ssd1306_handle_t handle, uint8_t x, uint8_t y, ssd1306_color_t color);
 
 /*
  * @brief   Draw line.
